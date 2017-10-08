@@ -87,6 +87,11 @@ function receivedMessage(event) {
     // If we receive a text message, check to see if it matches a keyword
     // and send back the template example. Otherwise, just echo the text we received.
     switch (messageText) {
+      case 'hi':
+      case 'hello':
+      case 'hey':
+        sendMessageForStep(senderID, 1);
+        break;
       case 'generic':
         sendGenericMessage(senderID);
         break;
@@ -111,9 +116,22 @@ function receivedPostback(event) {
   console.log("Received postback for user %d and page %d with payload '%s' " +
     "at %d", senderID, recipientID, payload, timeOfPostback);
 
+  var decodedPayload = payload.split(":");
+  switch (decodedPayload[0]) {
+    case 'LANG':
+      //TODO: for now, we will ignore language preference and just go with English
+      sendMessageForStep(senderID, 2);
+      break;
+    case 'STEP':
+      sendMessageForStep(senderID, decodedPayload[1]);
+      break;
+    default:
+      sendTextMessage(senderID, "Postback called");
+  }
+
   // When a postback is called, we'll send a message back to the sender to
   // let them know it was successful
-  sendTextMessage(senderID, "Postback called");
+  //sendTextMessage(senderID, "Postback called");
 }
 
 //////////////////////////
@@ -178,6 +196,79 @@ function sendGenericMessage(recipientId) {
 
   callSendAPI(messageData);
 }
+
+function sendMessageForStep(recipientId, step) {
+  var messageData;
+
+  if(step == 1) {
+    messageData = {
+      recipient: {
+        id: recipientId
+      },
+      message: {
+        attachment: {
+          type: "template",
+          payload: {
+            template_type: "button",
+            text: "Welcome to Ammi Service! Please select a language option below",
+            buttons: [{
+              type: "postback",
+              title: "English",
+              payload: "LANG:EN"
+            }, {
+              type: "postback",
+              title: "Urdu",
+              payload: "LANG:UR"
+            }]
+          }
+        }
+      }
+    };
+  } else if(step == 2) {
+    messageData = {
+      recipient: {
+        id: recipientId
+      },
+      message: {
+        attachment: {
+          type: "template",
+          payload: {
+            template_type: "button",
+            text: "Team Ammi believes that every woman in Pakistan should be safe, healthy and informed. This is why we created AmmiBot. AmmiBot is a tool to connect women in Pakistan with vital health and wellness information. Our first feature is aimed at informing women with maternal health information as they progress throughout their pregnancy. Press the 'Let's Get Started' button to try it out!",
+            buttons: [{
+              type: "postback",
+              title: "Let's Get Started",
+              payload: "STEP:3"
+            }]
+          }
+        }
+      }
+    };
+  } else {
+    messageData = {
+      recipient: {
+        id: recipientId
+      },
+      message: {
+        attachment: {
+          type: "template",
+          payload: {
+            template_type: "button",
+            text: "Team Ammi needs to see what the next steps from here are...",
+            buttons: [{
+              type: "postback",
+              title: "Let's Get Started",
+              payload: "STEP:3"
+            }]
+          }
+        }
+      }
+    };
+  }
+
+  callSendAPI(messageData);
+}
+
 
 function callSendAPI(messageData) {
   request({
