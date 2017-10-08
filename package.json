@@ -1,0 +1,21 @@
+{
+	"name": "ammi-service",
+	"version": "1.0.0",
+	"description": "Improving maternal health in Pakistan",
+	"main": "index.js",
+	"scripts": {
+		"start": "node bot.js"
+	},
+	"keywords": [
+		"messenger",
+		"bot",
+		"quickstart"
+	],
+	"author": "Naba Sadia Siddiqui <naba.sadia.siddiqui@gmail.com>",
+	"dependencies": {
+		"request": "^2.72.0",
+		"express": "*",
+		"body-parser": "*",
+		"config": "*"
+	}
+}
