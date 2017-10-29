@@ -218,47 +218,31 @@ function scheduleTipsStartingAtWeek(recipientId, pregnancyWeek) {
   var hour = today.getHours();
   var minute = today.getMinutes();
 
-  if(day <= 4) {
-    // schedule the first tip to time marked by today
-    schedule.scheduleJob({hour: hour, minute: minute, dayOfWeek: day}, function() {
-      var user = users.find({'senderID': recipientId});
-      var week = user[0].currWeek;
-      sendTipForWeek(recipientId, week, 1);
-    }.bind(null, recipientId));
-
-    // schedule second tip to Saturday, which is end of the week
-    schedule.scheduleJob({hour: 9, minute: 0, dayOfWeek: 6}, function() {
-      var user = users.find({'senderID': recipientId});
-      var weak = user[0].currWeek;
-      sendTipForWeek(recipientId, week, 2);
-      user[0].week++;
-      users.update(user);
-    }.bind(null, recipientId));
-  } else {
+  sendTipForWeek(recipientId, pregnancyWeek, 1);
+  if(day > 4) {
     // Today is one of Friday, Saturday or Sunday.
-    // We will send this week's tip, and schedule the first tip to be sent on
-    // Tuesday and second tip on Saturday for all coming weeks
-    sendTipForWeek(recipientId, pregnancyWeek, 1);
+    // We will send only send one tip for this week, but starting next week,
+    // 2 tips will be sent each ... one on Tuesday and one on Saturday
 
     // move to next week
     var user = users.find({'senderID': recipientId});
     user[0].currWeek = user[0].currWeek++;
     users.update(user);
-
-    schedule.scheduleJob({hour: 9, minute: 0, dayOfWeek: 2}, function() {
-      var user = users.find({'senderID': recipientId});
-      var week = user[0].currWeek;
-      sendTipForWeek(recipientId, week, 1);
-    }.bind(null, recipientId));
-
-    schedule.scheduleJob({hour: 9, minute: 0, dayOfWeek: 6}, function() {
-      var user = users.find({'senderID': recipientId});
-      var weak = user[0].currWeek;
-      sendTipForWeek(recipientId, week, 2);
-      user[0].week++;
-      users.update(user);
-    }.bind(null, recipientId));
   }
+
+  schedule.scheduleJob({hour: 9, minute: 0, dayOfWeek: 2}, function() {
+    var user = users.find({'senderID': recipientId});
+    var week = user[0].currWeek;
+    sendTipForWeek(recipientId, week, 1);
+  }.bind(null, recipientId));
+
+  schedule.scheduleJob({hour: 9, minute: 0, dayOfWeek: 6}, function() {
+    var user = users.find({'senderID': recipientId});
+    var weak = user[0].currWeek;
+    sendTipForWeek(recipientId, week, 2);
+    user[0].week++;
+    users.update(user);
+  }.bind(null, recipientId));
 }
 
 function sendTipForWeek(recipientId, week, tipNum) {
