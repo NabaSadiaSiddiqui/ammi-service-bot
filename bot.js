@@ -84,7 +84,7 @@ function receivedMessage(event) {
       if(users.find( {'senderID': senderID} ).length == 0) {
         users.insert({'senderID': senderID});
       }
-      sendMessageForStep(senderID, 1);
+      sendLanguageMessage(senderID);
     } else {
       if(messageText.toLowerCase().includes("weeks") ||
         messageText.toLowerCase().includes("week") ||
@@ -129,119 +129,86 @@ function receivedPostback(event) {
   console.log("Received postback for user %d and page %d with payload '%s' " +
     "at %d", senderID, recipientID, payload, timeOfPostback);
 
-  var decodedPayload = payload.split(":");
-  switch (decodedPayload[0]) {
-    case 'LANG':
-      messages.msgs.setLocale(decodedPayload[1]);
-      sendMessageForStep(senderID, 2);
-      break;
-    case 'STEP':
-      sendMessageForStep(senderID, decodedPayload[1]);
-      break;
-    case 'ACTION':
-      if(decodedPayload[1] == 'OPT-OUT') {
-        //TODO: opt-out user from susbscription
-        console.log('TODO: Opt-out')
-      }
-    default:
-      sendTextMessage(senderID, "Postback called");
+  if(payload.includes("LANG")) {
+    var locale = payload.split(":")[1];
+    messages.msgs.setLocale(locale);
+    sendeWelcomeMessage(senderID);
+  } else if(payload.includes("ACTION")) {
+    var action = payload.split(":")[1];
+    switch(action) {
+      case 'START':
+        sendPregnancyStateMessage(senderID);
+        break;
+      case 'OPT-OUT':
+        console.log('TODO: opt-out');
+        break;
+      default:
+        console.error("Recieved an unkown action %s", action);
+    }
+  } else {
+    console.error("Received an unknown postback with payload %s", payload);
   }
 }
 
-//////////////////////////
-// Sending helpers
-//////////////////////////
-function sendTextMessage(recipientId, messageText) {
+function sendLanguageMessage(recipientId) {
   var messageData = {
     recipient: {
       id: recipientId
     },
     message: {
-      text: messageText
+      attachment: {
+        type: "template",
+        payload: {
+          template_type: "button",
+          text: "Welcome to Ammi Service! Please select a language option below",
+          buttons: [{
+            type: "postback",
+            title: "English",
+            payload: "LANG:EN"
+          }, {
+            type: "postback",
+            title: "Urdu",
+            payload: "LANG:UR"
+          }]
+        }
+      }
     }
   };
-
   callSendAPI(messageData);
 }
 
-function sendMessageForStep(recipientId, step) {
-  var messageData;
+function sendeWelcomeMessage(recipientId) {
+  var messageData = {
+    recipient: {
+      id: recipientId
+    },
+    message: {
+      attachment: {
+        type: "template",
+        payload: {
+          template_type: "button",
+          text: messages.msgs.translate("INTRO"),
+          buttons: [{
+            type: "postback",
+            title: "Let's Get Started",
+            payload: "ACTION:START"
+          }]
+        }
+      }
+    }
+  };
+  callSendAPI(messageData);
+}
 
-  if(step == 1) {
-    messageData = {
-      recipient: {
-        id: recipientId
-      },
-      message: {
-        attachment: {
-          type: "template",
-          payload: {
-            template_type: "button",
-            text: "Welcome to Ammi Service! Please select a language option below",
-            buttons: [{
-              type: "postback",
-              title: "English",
-              payload: "LANG:EN"
-            }, {
-              type: "postback",
-              title: "Urdu",
-              payload: "LANG:UR"
-            }]
-          }
-        }
-      }
-    };
-  } else if(step == 2) {
-    messageData = {
-      recipient: {
-        id: recipientId
-      },
-      message: {
-        attachment: {
-          type: "template",
-          payload: {
-            template_type: "button",
-            text: messages.msgs.translate("INTRO"),
-            buttons: [{
-              type: "postback",
-              title: "Let's Get Started",
-              payload: "STEP:3"
-            }]
-          }
-        }
-      }
-    };
-  } else if(step == 3) {
-    messageData = {
-      recipient: {
-        id: recipientId
-      },
-      message: {
-        text: messages.msgs.translate("PREGNANCY_STATE")
-      }
-    };
-  } else {
-    messageData = {
-      recipient: {
-        id: recipientId
-      },
-      message: {
-        attachment: {
-          type: "template",
-          payload: {
-            template_type: "button",
-            text: "Team Ammi needs to see what the next steps from here are...",
-            buttons: [{
-              type: "postback",
-              title: "Let's Get Started",
-              payload: "STEP:3"
-            }]
-          }
-        }
-      }
-    };
-  }
-
+function sendPregnancyStateMessage(recipientId) {
+  var messageData = {
+    recipient: {
+      id: recipientId
+    },
+    message: {
+      text: messages.msgs.translate("PREGNANCY_STATE")
+    }
+  };
   callSendAPI(messageData);
 }
 
