@@ -37,7 +37,7 @@ app.get('/webhook', function(req, res) {
 
 // Display the web page
 app.get('/', function(req, res) {
-  var messengerButton = "<html><head><title>Ammi Service</title></head><body><h1>Ammi Service</h1>This is a bot based on Messenger Platform QuickStart.</body></html>";
+  var messengerButton = "<html><head><title>Ammi Service</title></head><body><h1>Ammi Service</h1>This is a Facebook bot, running on Heroku.</body></html>";
   res.writeHead(200, {'Content-Type': 'text/html'});
   res.write(messengerButton);
   res.end();
