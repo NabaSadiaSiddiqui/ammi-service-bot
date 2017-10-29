@@ -4,7 +4,11 @@ const bodyParser = require('body-parser');
 const request = require('request');
 const path = require('path');
 const config = require('config');
-const messages = require('./messages.js')
+const messages = require('./messages.js');
+const loki = require('lokijs');
+
+let db = new loki('users.json');
+let users = db.addCollection('users');
 
 let app = express();
 
@@ -33,7 +37,6 @@ app.get('/', function(req, res) {
 
 // Message processing
 app.post('/webhook', function (req, res) {
-  console.log(req.body);
   var data = req.body;
 
   if (data.object === 'page') {
@@ -80,11 +83,23 @@ function receivedMessage(event) {
       case 'hi':
       case 'hello':
       case 'hey':
+        if(users.find( {'senderID': senderID} ).length == 0) {
+          users.insert({'senderID': senderID});
+        }
         sendMessageForStep(senderID, 1);
         break;
       default:
         if(messageText.includes("weeks")) {
           var pregnancyWeek = messageText.split(" ")[0];
+          var user = users.find({'senderID': senderID});
+          if(user.length != 0) {
+            if(user[0].pregnancyWeek == undefined) {
+              user[0].pregnancyWeek = pregnancyWeek;
+              users.update(user);
+            }
+          } else {
+            console.error("This user %s is not in the database", senderID);
+          }
           sendTipForWeek(senderID, pregnancyWeek);
           sendSecondTipForWeek(senderID, pregnancyWeek);
         } else {

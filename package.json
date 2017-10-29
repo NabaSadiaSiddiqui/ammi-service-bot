@@ -19,6 +19,7 @@
 		"config": "*",
 		"express": "*",
 		"localize": "^0.4.7",
-		"request": "^2.72.0"
+		"request": "^2.72.0",
+		"lokijs": "*"
 	}
 }
