@@ -18,8 +18,15 @@ app.use(bodyParser.urlencoded({ extended: true }));
 
 // Webhook validation
 app.get('/webhook', function(req, res) {
+  var verify_token = "";
+  try { // running locally
+    verify_token  = config.get("VERIFY_TOKEN");
+  } catch(err) { // running on heroku
+    verify_token = process.env.VERIFY_TOKEN;
+  }
+
   if (req.query['hub.mode'] === 'subscribe' &&
-      req.query['hub.verify_token'] === config.get("VERIFY_TOKEN")) {
+      req.query['hub.verify_token'] === verify_token) {
     console.log("Validating webhook");
     res.status(200).send(req.query['hub.challenge']);
   } else {
@@ -276,9 +283,15 @@ function sendTipForWeek(recipientId, week, tipNum) {
 }
 
 function callSendAPI(messageData) {
+  var access_token = "";
+  try { // running locally
+    access_token = config.get("PAGE_ACCESS_TOKEN");
+  } catch(err) { // running on heroku
+    access_token = process.env.PAGE_ACCESS_TOKEN;
+  }
   request({
     uri: 'https://graph.facebook.com/v2.6/me/messages',
-    qs: { access_token: config.get("PAGE_ACCESS_TOKEN") },
+    qs: { access_token: access_token },
     method: 'POST',
     json: messageData
 
