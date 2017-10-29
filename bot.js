@@ -78,20 +78,21 @@ function receivedMessage(event) {
   var messageAttachments = message.attachments;
 
   if (messageText) {
-    // If we receive a text message, check to see if it matches a keyword
-    // and send back the template example. Otherwise, just echo the text we received.
-    switch (messageText) {
-      case 'hi':
-      case 'hello':
-      case 'hey':
-        if(users.find( {'senderID': senderID} ).length == 0) {
-          users.insert({'senderID': senderID});
-        }
-        sendMessageForStep(senderID, 1);
-        break;
-      default:
-        if(messageText.includes("weeks")) {
-          var pregnancyWeek = messageText.split(" ")[0];
+    if(messageText.toLowerCase() === 'hi' ||
+        messageText.toLowerCase() === 'hey' ||
+        messageText.toLowerCase() === 'hello') {
+      if(users.find( {'senderID': senderID} ).length == 0) {
+        users.insert({'senderID': senderID});
+      }
+      sendMessageForStep(senderID, 1);
+    } else {
+      if(messageText.toLowerCase().includes("weeks") ||
+        messageText.toLowerCase().includes("week") ||
+        isANumber(messageText)) {
+          var pregnancyWeek = messageText;
+          if(!isANumber(messageText)) {
+            pregnancyWeek = messageText.split(" ")[0];
+          }
           var user = users.find({'senderID': senderID});
           if(user.length != 0) {
             if(user[0].pregnancyWeek == undefined) {
@@ -103,13 +104,17 @@ function receivedMessage(event) {
           } else {
             console.error("This user %s is not in the database", senderID);
           }
-        } else {
-          sendTextMessage(senderID, messageText);
-        }
+      } else {
+        sendTextMessage(senderID, messageText);
+      }
     }
   } else if (messageAttachments) {
     sendTextMessage(senderID, "Message with attachment received");
   }
+}
+
+function isANumber(str){
+  return !/\D/.test(str);
 }
 
 function receivedPostback(event) {
