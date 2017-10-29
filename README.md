@@ -1,5 +1,7 @@
 # Ammi Service chatbot
 
+![Heroku](https://heroku-badge.herokuapp.com/?app=ammi-service)
+
 ## Instructions
 ```bash
 npm install
