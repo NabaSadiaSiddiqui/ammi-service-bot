@@ -99,7 +99,7 @@ function receivedMessage(event) {
               user[0].currWeek = pregnancyWeek;
               users.update(user);
             }
-            scheduleTipsStartingAtWeek(senderID, pregnancyWeak);
+            scheduleTipsStartingAtWeek(senderID, pregnancyWeek);
           } else {
             console.error("This user %s is not in the database", senderID);
           }
@@ -252,7 +252,7 @@ function scheduleTipsStartingAtWeek(recipientId, pregnancyWeek) {
       var user = users.find({'senderID': recipientId});
       var week = user[0].currWeek;
       sendTipForWeek(recipientId, week);
-    ).bind(null, recipientId);
+    }.bind(null, recipientId));
 
     // schedule second tip to Saturday, which is end of the week
     schedule.scheduleJob({hour: 9, minute: 0, dayOfWeek: 6}, function() {
@@ -261,12 +261,12 @@ function scheduleTipsStartingAtWeek(recipientId, pregnancyWeek) {
       sendSecondTipForWeek(recipientId, week);
       user[0].week++;
       users.update(user);
-    ).bind(null, recipientId);
+    }.bind(null, recipientId));
   } else {
     // Today is one of Friday, Saturday or Sunday.
     // We will send this week's tip, and schedule the first tip to be sent on
     // Tuesday and second tip on Saturday for all coming weeks
-    sendTipForWeek(senderID, pregnancyWeek);
+    sendTipForWeek(recipientId, pregnancyWeek);
 
     // move to next week
     var user = users.find({'senderID': recipientId});
@@ -277,7 +277,7 @@ function scheduleTipsStartingAtWeek(recipientId, pregnancyWeek) {
       var user = users.find({'senderID': recipientId});
       var week = user[0].currWeek;
       sendTipForWeek(recipientId, week);
-    ).bind(null, recipientId);
+    }.bind(null, recipientId));
 
     schedule.scheduleJob({hour: 9, minute: 0, dayOfWeek: 6}, function() {
       var user = users.find({'senderID': recipientId});
@@ -285,7 +285,7 @@ function scheduleTipsStartingAtWeek(recipientId, pregnancyWeek) {
       sendSecondTipForWeek(recipientId, week);
       user[0].week++;
       users.update(user);
-    ).bind(null, recipientId);
+    }.bind(null, recipientId));
   }
 }
 
@@ -313,6 +313,13 @@ function sendTipForWeek(recipientId, week) {
 }
 
 function sendSecondTipForWeek(recipientId, week) {
+  var tip = "";
+  try {
+    var tip = messages.msgs.translate(week+"-2");
+  } catch (err) {
+    console.log("Week %s is missing tip for week %s", week, "2");
+    return;
+  }
   var messageData = {
     recipient: {
       id: recipientId
@@ -322,7 +329,7 @@ function sendSecondTipForWeek(recipientId, week) {
         type: "template",
         payload: {
           template_type: "button",
-          text: messages.msgs.translate(week+"-2"),
+          text: tip,
           buttons: [{
             type: "postback",
             title: messages.msgs.translate("OPT-OUT"),
