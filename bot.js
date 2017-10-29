@@ -6,6 +6,7 @@ const path = require('path');
 const config = require('config');
 const messages = require('./messages.js');
 const loki = require('lokijs');
+const schedule = require('node-schedule');
 
 let db = new loki('users.json');
 let users = db.addCollection('users');
@@ -95,13 +96,13 @@ function receivedMessage(event) {
           if(user.length != 0) {
             if(user[0].pregnancyWeek == undefined) {
               user[0].pregnancyWeek = pregnancyWeek;
+              user[0].currWeek = pregnancyWeek;
               users.update(user);
             }
+            scheduleTipsStartingAtWeek(senderID, pregnancyWeak);
           } else {
             console.error("This user %s is not in the database", senderID);
           }
-          sendTipForWeek(senderID, pregnancyWeek);
-          sendSecondTipForWeek(senderID, pregnancyWeek);
         } else {
           sendTextMessage(senderID, messageText);
         }
@@ -237,6 +238,55 @@ function sendMessageForStep(recipientId, step) {
   }
 
   callSendAPI(messageData);
+}
+
+function scheduleTipsStartingAtWeek(recipientId, pregnancyWeek) {
+  var today = new Date();
+  var day = today.getDay();
+  var hour = today.getHours();
+  var minute = today.getMinutes();
+
+  if(day <= 4) {
+    // schedule the first tip to time marked by today
+    schedule.scheduleJob({hour: hour, minute: minute, dayOfWeek: day}, function() {
+      var user = users.find({'senderID': recipientId});
+      var week = user[0].currWeek;
+      sendTipForWeek(recipientId, week);
+    ).bind(null, recipientId);
+
+    // schedule second tip to Saturday, which is end of the week
+    schedule.scheduleJob({hour: 9, minute: 0, dayOfWeek: 6}, function() {
+      var user = users.find({'senderID': recipientId});
+      var weak = user[0].currWeek;
+      sendSecondTipForWeek(recipientId, week);
+      user[0].week++;
+      users.update(user);
+    ).bind(null, recipientId);
+  } else {
+    // Today is one of Friday, Saturday or Sunday.
+    // We will send this week's tip, and schedule the first tip to be sent on
+    // Tuesday and second tip on Saturday for all coming weeks
+    sendTipForWeek(senderID, pregnancyWeek);
+
+    // move to next week
+    var user = users.find({'senderID': recipientId});
+    user[0].currWeek = user[0].currWeek++;
+    users.update(user);
+
+    schedule.scheduleJob({hour: 9, minute: 0, dayOfWeek: 2}, function() {
+      var user = users.find({'senderID': recipientId});
+      var week = user[0].currWeek;
+      sendTipForWeek(recipientId, week);
+    ).bind(null, recipientId);
+
+    schedule.scheduleJob({hour: 9, minute: 0, dayOfWeek: 6}, function() {
+      var user = users.find({'senderID': recipientId});
+      var weak = user[0].currWeek;
+      sendSecondTipForWeek(recipientId, week);
+      user[0].week++;
+      users.update(user);
+    ).bind(null, recipientId);
+  }
 }
 
 function sendTipForWeek(recipientId, week) {
