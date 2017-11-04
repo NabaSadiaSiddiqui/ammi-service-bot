@@ -3,12 +3,44 @@ const localize = require('localize');
 
 let msgs = new localize({
   "PREGNANCY_STATE": {
-    "en_US": "How much time has passed since you last had your period? Please enter in the form <X> weeks.",
+    "en_US": "How many months has it been since you last had your period?",
     "ur_PK": "Urdu -> how much time has passed since you last had your period?"
   },
   "OPT-OUT": {
     "en_US": "Click to opt-out",
     "ur_PK": "Urdu -> click to opt-out"
+  },
+  "MOC_2": {
+    "en_US": "2 months",
+    "ur_PK": "2 months in urdu"
+  },
+  "MOC_3": {
+    "en_US": "3 months",
+    "ur_PK": "3 months in urdu"
+  },
+  "MOC_4": {
+    "en_US": "4 months",
+    "ur_PK": "4 months in urdu"
+  },
+  "MOC_5": {
+    "en_US": "5 months",
+    "ur_PK": "5 months in urdu"
+  },
+  "MOC_6": {
+    "en_US": "6 months",
+    "ur_PK": "6 months in urdu"
+  },
+  "MOC_7": {
+    "en_US": "7 months",
+    "ur_PK": "7 months in urdu"
+  },
+  "MOC_8": {
+    "en_US": "8 months",
+    "ur_PK": "8 months in urdu"
+  },
+  "MOC_9": {
+    "en_US": "9 months",
+    "ur_PK": "9 months in urdu"
   },
   "5-1": {
     "en_US": "Welcome! Congratulations on your pregnancy. This is a very exciting time for you – but you might have some questions. It seems you are in month two of your pregnancy. Pregnancy is divided into three parts, each three months long. Ammi service will send you weekly messages with tips, advice, and information so you and your baby are healthy! If you haven’t yet, please plan to go to a clinic soon or the LHW of your community.",

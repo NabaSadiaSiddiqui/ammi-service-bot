@@ -83,34 +83,31 @@ function receivedMessage(event) {
 
   var messageText = message.text;
   var messageAttachments = message.attachments;
+  var messageQuickReply = message.quick_reply;
 
-  if (messageText) {
-    if(messageText.toLowerCase().includes("weeks") || messageText.toLowerCase().includes("week") || isANumber(messageText)) {
-        var pregnancyWeek = messageText;
-        if(!isANumber(messageText)) {
-          pregnancyWeek = messageText.split(" ")[0];
-        }
-        var user = users.find({'senderID': senderID});
-        if(user.length != 0) {
-          if(user[0].pregnancyWeek == undefined) {
-            user[0].pregnancyWeek = pregnancyWeek;
-            user[0].currWeek = pregnancyWeek;
-            users.update(user);
-          }
-          scheduleTipsStartingAtWeek(senderID, pregnancyWeek);
-        } else {
-          console.error("This user %s is not in the database", senderID);
-        }
+  if(messageQuickReply) {
+    var payload = messageQuickReply.payload;
+    var monthOfConception = payload.split("_")[1];
+
+    if(!isANumber(monthOfConception)) {
+      console.error("Irregular payload received from quick reply = %s", payload);
     } else {
-      sendTextMessage(senderID, messageText);
+      var pregnancyWeek = getPregnancyWeek(monthOfConception);
+      var user = users.find({'senderID': senderID});
+      if(user.length != 0) {
+        if(user[0].pregnancyWeek == undefined) {
+          user[0].pregnancyWeek = pregnancyWeek;
+          user[0].currWeek = pregnancyWeek;
+          users.update(user);
+        }
+        scheduleTipsStartingAtWeek(senderID, pregnancyWeek);
+      }
     }
-  } else if (messageAttachments) {
+  } else if(messageText) {
+    sendTextMessage(messageText);
+  } else if(messageAttachments) {
     sendTextMessage(senderID, "Message with attachment received");
   }
-}
-
-function isANumber(str){
-  return !/\D/.test(str);
 }
 
 function receivedPostback(event) {
@@ -181,10 +178,67 @@ function sendPregnancyStateMessage(recipientId) {
       id: recipientId
     },
     message: {
-      text: messages.msgs.translate("PREGNANCY_STATE")
+      text: messages.msgs.translate("PREGNANCY_STATE"),
+      "quick_replies":[{
+        "content_type":"text",
+        "title":messages.msgs.translate("MOC_2"),
+        "payload":"moc_2"
+      },{
+        "content_type":"text",
+        "title":messages.msgs.translate("MOC_3"),
+        "payload":"moc_3"
+      },{
+        "content_type":"text",
+        "title":messages.msgs.translate("MOC_4"),
+        "payload":"moc_4"
+      },{
+        "content_type":"text",
+        "title":messages.msgs.translate("MOC_5"),
+        "payload":"moc_5"
+      },{
+        "content_type":"text",
+        "title":messages.msgs.translate("MOC_6"),
+        "payload":"moc_6"
+      },{
+        "content_type":"text",
+        "title":messages.msgs.translate("MOC_7"),
+        "payload":"moc_7"
+      },{
+        "content_type":"text",
+        "title":messages.msgs.translate("MOC_8"),
+        "payload":"moc_8"
+      },{
+        "content_type":"text",
+        "title":messages.msgs.translate("MOC_9"),
+        "payload":"moc_9"
+      }]
     }
   };
   callSendAPI(messageData);
+}
+
+function isANumber(str){
+  return !/\D/.test(str);
+}
+
+function getPregnancyWeek(monthOfConception) {
+  if(monthOfConception === "2") {
+    return "5";
+  } else if(monthOfConception === "3") {
+    return "9";
+  } else if(monthOfConception === "4") {
+    return "15";
+  } else if(monthOfConception === "5") {
+    return "18";
+  } else if(monthOfConception === "6") {
+    return "22";
+  } else if(monthOfConception === "7") {
+    return "27";
+  } else if(monthOfConception === "8") {
+    return "31";
+  } else {
+    return "36"
+  }
 }
 
 function scheduleTipsStartingAtWeek(recipientId, pregnancyWeek) {
