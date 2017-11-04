@@ -85,35 +85,24 @@ function receivedMessage(event) {
   var messageAttachments = message.attachments;
 
   if (messageText) {
-    if(messageText.toLowerCase() === 'hi' ||
-        messageText.toLowerCase() === 'hey' ||
-        messageText.toLowerCase() === 'hello') {
-      if(users.find( {'senderID': senderID} ).length == 0) {
-        users.insert({'senderID': senderID});
-      }
-      sendLanguageMessage(senderID);
+    if(messageText.toLowerCase().includes("weeks") || messageText.toLowerCase().includes("week") || isANumber(messageText)) {
+        var pregnancyWeek = messageText;
+        if(!isANumber(messageText)) {
+          pregnancyWeek = messageText.split(" ")[0];
+        }
+        var user = users.find({'senderID': senderID});
+        if(user.length != 0) {
+          if(user[0].pregnancyWeek == undefined) {
+            user[0].pregnancyWeek = pregnancyWeek;
+            user[0].currWeek = pregnancyWeek;
+            users.update(user);
+          }
+          scheduleTipsStartingAtWeek(senderID, pregnancyWeek);
+        } else {
+          console.error("This user %s is not in the database", senderID);
+        }
     } else {
-      if(messageText.toLowerCase().includes("weeks") ||
-        messageText.toLowerCase().includes("week") ||
-        isANumber(messageText)) {
-          var pregnancyWeek = messageText;
-          if(!isANumber(messageText)) {
-            pregnancyWeek = messageText.split(" ")[0];
-          }
-          var user = users.find({'senderID': senderID});
-          if(user.length != 0) {
-            if(user[0].pregnancyWeek == undefined) {
-              user[0].pregnancyWeek = pregnancyWeek;
-              user[0].currWeek = pregnancyWeek;
-              users.update(user);
-            }
-            scheduleTipsStartingAtWeek(senderID, pregnancyWeek);
-          } else {
-            console.error("This user %s is not in the database", senderID);
-          }
-      } else {
-        sendTextMessage(senderID, messageText);
-      }
+      sendTextMessage(senderID, messageText);
     }
   } else if (messageAttachments) {
     sendTextMessage(senderID, "Message with attachment received");
@@ -141,17 +130,13 @@ function receivedPostback(event) {
       users.insert({'senderID': senderID});
     }
     sendLanguageMessage(senderID);
-  }
-  if(payload.includes("LANG")) {
+  } else if(payload.includes("LANG")) {
     var locale = payload.split(":")[1];
     messages.msgs.setLocale(locale);
-    sendeWelcomeMessage(senderID);
+    sendPregnancyStateMessage(senderID);
   } else if(payload.includes("ACTION")) {
     var action = payload.split(":")[1];
     switch(action) {
-      case 'START':
-        sendPregnancyStateMessage(senderID);
-        break;
       case 'OPT-OUT':
         console.log('TODO: opt-out');
         break;
@@ -182,29 +167,6 @@ function sendLanguageMessage(recipientId) {
             type: "postback",
             title: "Urdu",
             payload: "LANG:ur_PK"
-          }]
-        }
-      }
-    }
-  };
-  callSendAPI(messageData);
-}
-
-function sendeWelcomeMessage(recipientId) {
-  var messageData = {
-    recipient: {
-      id: recipientId
-    },
-    message: {
-      attachment: {
-        type: "template",
-        payload: {
-          template_type: "button",
-          text: messages.msgs.translate("INTRO"),
-          buttons: [{
-            type: "postback",
-            title: "Let's Get Started",
-            payload: "ACTION:START"
           }]
         }
       }
