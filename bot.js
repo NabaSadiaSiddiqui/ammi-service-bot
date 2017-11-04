@@ -136,6 +136,12 @@ function receivedPostback(event) {
   console.log("Received postback for user %d and page %d with payload '%s' " +
     "at %d", senderID, recipientID, payload, timeOfPostback);
 
+  if(payload === "get_started") {
+    if(users.find( {'senderID': senderID} ).length == 0) {
+      users.insert({'senderID': senderID});
+    }
+    sendLanguageMessage(senderID);
+  }
   if(payload.includes("LANG")) {
     var locale = payload.split(":")[1];
     messages.msgs.setLocale(locale);
