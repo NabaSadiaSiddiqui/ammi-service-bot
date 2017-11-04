@@ -177,11 +177,11 @@ function sendLanguageMessage(recipientId) {
           buttons: [{
             type: "postback",
             title: "English",
-            payload: "LANG:EN"
+            payload: "LANG:en_US"
           }, {
             type: "postback",
             title: "Urdu",
-            payload: "LANG:UR"
+            payload: "LANG:ur_PK"
           }]
         }
       }
