@@ -5,6 +5,7 @@ const request = require('request');
 const path = require('path');
 const config = require('config');
 const messages = require('./messages.js');
+const audio = require('./audio.js');
 const loki = require('lokijs');
 const schedule = require('node-schedule');
 
@@ -130,12 +131,13 @@ function receivedPostback(event) {
   } else if(payload.includes("LANG")) {
     var locale = payload.split(":")[1];
     messages.msgs.setLocale(locale);
+    audio.audio.setLocale(locale);
     sendPregnancyStateMessage(senderID);
   } else if(payload.includes("ACTION")) {
     var action = payload.split(":")[1];
     switch(action) {
       case 'OPT-OUT':
-        console.log('TODO: opt-out');
+        optOut(senderID);
         break;
       default:
         console.error("Recieved an unkown action %s", action);
@@ -248,6 +250,7 @@ function scheduleTipsStartingAtWeek(recipientId, pregnancyWeek) {
   var minute = today.getMinutes();
 
   sendTipForWeek(recipientId, pregnancyWeek, 1);
+  sendAudioTipForWeek(recipientId, pregnancyWeek, 1);
   if(day > 4) {
     // Today is one of Friday, Saturday or Sunday.
     // We will send only send one tip for this week, but starting next week,
@@ -263,12 +266,14 @@ function scheduleTipsStartingAtWeek(recipientId, pregnancyWeek) {
     var user = users.find({'senderID': recipientId});
     var week = user[0].currWeek;
     sendTipForWeek(recipientId, week, 1);
+    sendAudioTipForWeek(recipientId, week, 1);
   }.bind(null, recipientId));
 
   schedule.scheduleJob({hour: 9, minute: 0, dayOfWeek: 6}, function() {
     var user = users.find({'senderID': recipientId});
     var weak = user[0].currWeek;
     sendTipForWeek(recipientId, week, 2);
+    sendAudioTipForWeek(recipientId, week, 2);
     user[0].week++;
     users.update(user);
   }.bind(null, recipientId));
@@ -302,6 +307,35 @@ function sendTipForWeek(recipientId, week, tipNum) {
     }
   };
   callSendAPI(messageData);
+}
+
+function sendAudioTipForWeek(recipientId, week, tipNum) {
+  var tip = "";
+  try {
+    var tip = audio.audio.translate(week + "-" + tipNum);
+  } catch (err) {
+    console.log("Week %s is missing audio tip number %s", week, tipNum);
+    return;
+  }
+  var messageData = {
+    recipient: {
+      id: recipientId
+    },
+    message: {
+      attachment: {
+        type: "audio",
+        payload: {
+          url: tip,
+          is_reusable: "true"
+        }
+      }
+    }
+  };
+  callSendAPI(messageData);
+}
+
+function optOut(senderID) {
+
 }
 
 function callSendAPI(messageData) {
