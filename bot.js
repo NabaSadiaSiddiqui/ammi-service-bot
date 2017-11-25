@@ -366,7 +366,45 @@ function callSendAPI(messageData) {
   });
 }
 
+function setGreetingMessage() {
+  var greeting = {
+  "greeting": [
+    {
+      "locale":"default",
+      "text":"AmmiBot v1 is a tool to connect women in Pakistan with vital health and wellness information as they progress throughout their pregnancy."
+    }, {
+      "locale":"en_US",
+      "text":"AmmiBot v1 is a tool to connect women in Pakistan with vital health and wellness information as they progress throughout their pregnancy."
+    }, {
+      "locale":"ur_PK",
+      "text":"Welcome to Team Ammi Service in URDU v1"
+    }]
+  };
+  var access_token = "";
+  try { // running locally
+    access_token = config.get("PAGE_ACCESS_TOKEN");
+  } catch(err) { // running on heroku
+    access_token = process.env.PAGE_ACCESS_TOKEN;
+  }
+  request({
+    uri: 'https://graph.facebook.com/v2.6/me/messenger_profile',
+    qs: { access_token: access_token },
+    method: 'POST',
+    json: greeting
+
+  }, function (error, response, body) {
+    if (!error && response.statusCode == 200) {
+      console.log("Successfully sent greeting");
+    } else {
+      console.error("Unable to send greeting.");
+      console.error(response);
+      console.error(error);
+    }
+  });
+}
+
 // Set Express to listen out for HTTP requests
 var server = app.listen(process.env.PORT || 3000, function () {
+  setGreetingMessage();
   console.log("Listening on port %s", server.address().port);
 });
