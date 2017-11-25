@@ -403,8 +403,38 @@ function setGreetingMessage() {
   });
 }
 
+function setGetStartedButton() {
+  var button = {
+    "get_started": {
+      "payload":"get_started"
+    }
+  };
+  var access_token = "";
+  try { // running locally
+    access_token = config.get("PAGE_ACCESS_TOKEN");
+  } catch(err) { // running on heroku
+    access_token = process.env.PAGE_ACCESS_TOKEN;
+  }
+  request({
+    uri: 'https://graph.facebook.com/v2.6/me/messenger_profile',
+    qs: { access_token: access_token },
+    method: 'POST',
+    json: button
+
+  }, function (error, response, body) {
+    if (!error && response.statusCode == 200) {
+      console.log("Successfully set get_started button");
+    } else {
+      console.error("Unable to set get_started button.");
+      console.error(response);
+      console.error(error);
+    }
+  });
+}
+
 // Set Express to listen out for HTTP requests
 var server = app.listen(process.env.PORT || 3000, function () {
   setGreetingMessage();
+  setGetStartedButton();
   console.log("Listening on port %s", server.address().port);
 });
